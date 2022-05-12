@@ -3,7 +3,12 @@ import requests
 import bs4
 import csv
 from datetime import date
+import unidecode
 today = date.today()
+
+def simplify(text):
+    unaccented = unidecode.unidecode(text)
+    return unaccented
 
 def headline_grabber():
     res = requests.get('https://www.hispantv.com/ultimas-noticias')
@@ -11,7 +16,10 @@ def headline_grabber():
         body = bs4.BeautifulSoup(res.text, 'html.parser')
         headlines = []
         for headline in body.find_all("h3"):
-            headlines.append(headline.text)
+            ## To remove accents
+            headlines.append(simplify(headline.text))
+            ## With accents accents
+            # headlines.append(headline.text)
         for i in headlines:
             if 'Titulares más destacados de HispanTV' in i:
                 headlines.remove(i)
@@ -21,14 +29,12 @@ def headline_grabber():
     return headlines
 
 def existing_grabber():
-    knownLines = open('headline_data.csv', 'r')
-    csvOb = csv.DictReader(knownLines)
-    existing_headlines = []
-    for i in csvOb:
-        if i['Headline'] != '':
-            existing_headlines.append(i["Headline"])
-    return existing_headlines
-
+    print_list = []
+    with open('headline_data.csv') as csv_file:
+        csv_reader = csv.DictReader(csv_file)
+        for row in csv_reader:
+            print_list.append(row['Headline'])
+    return print_list
 
 def print_list(hl,exl):
     print_list = []
@@ -46,8 +52,6 @@ def csv_writer(printing):
         database.write(str(today))
         database.write(',')
         database.write(i)
-
-
 
 headlines = headline_grabber()
 existing = existing_grabber()
